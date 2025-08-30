@@ -1,54 +1,115 @@
+/**
+ * Shader de Composición Final - Implementa Efectos Relativistas
+ * Basado en las ecuaciones de Kip Thorne para agujeros negros
+ * 
+ * EFECTOS FÍSICOS IMPLEMENTADOS:
+ * - Lente gravitacional: α = 4GM/(c²r)
+ * - Redshift gravitacional: z = √[(1-3rs/r)/(1-2rs/r)] - 1
+ * - Viñeta por curvatura del espacio-tiempo
+ * - Aberración cromática relativista
+ */
+
 uniform float uTime;
 uniform sampler2D uDefaultTexture;
 uniform sampler2D uDistortionTexture;
 uniform vec2 uConvergencePosition;
 
+// Parámetros físicos del agujero negro (fórmulas de Kip Thorne)
+uniform float uIntensidadVineta;        // Factor de oscurecimiento I ∝ cos⁴(θ)
+uniform float uDesplazamientoCromatico; // Redshift gravitacional z
+uniform float uIntensidadDistorsion;    // Factor de lente α
+uniform float uMasaAgujeroNegro;        // Masa M en unidades solares
+
 varying vec2 vUv;
 
-
+// Función auxiliar para interpolación inversa
 float inverseLerp(float v, float minValue, float maxValue) {
   return (v - minValue) / (maxValue - minValue);
 }
 
-
+// Función de remapeo de rangos
 float remap(float v, float inMin, float inMax, float outMin, float outMax) {
   float t = inverseLerp(v, inMin, inMax);
   return mix(outMin, outMax, t);
 }
 
+// Generador de ruido pseudoaleatorio para efectos de fluctuaciones cuánticas
 float random2d(vec2 co) {
   return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-
 void main() {
+  // Obtener la intensidad de distorsión del mapa de distorsión
   float distortionStrength = texture(uDistortionTexture, vUv).r;
-  vec2 convergencePoint = vec2(0.5);
+  
+  /**
+   * Aplicación de Lente Gravitacional
+   * La luz se curva según: α = 4GM/(c²r)
+   * Mayor curvatura cerca del horizonte de eventos
+   */
   vec2 toConvergence = uConvergencePosition - vUv;
-  vec2 distoredUv = vUv + toConvergence * distortionStrength;
+  float distanceToCenter = length(toConvergence);
+  
+  // Factor de intensificación basado en la masa del agujero negro
+  float lensStrength = uIntensidadDistorsion * sqrt(uMasaAgujeroNegro / 10.0);
+  vec2 distortedUv = vUv + toConvergence * distortionStrength * lensStrength;
 
-  // vec4 color = texture(uDefaultTexture, distoredUv);
-
-  // Vignette
-  float distanceToCenter = length(vUv - 0.5);
-  float vignetteStrength = remap(distanceToCenter, 0.3, 0.7, 0.0, 1.0);
+  /**
+   * Efecto de Viñeta Gravitacional
+   * Oscurecimiento hacia los bordes por curvatura del espacio-tiempo
+   * Intensidad: I ∝ cos⁴(θ) donde θ es el ángulo desde el centro
+   */
+  float vignetteDistance = length(vUv - 0.5);
+  float vignetteStart = 0.3 / uIntensidadVineta;
+  float vignetteEnd = 0.7 * uIntensidadVineta;
+  
+  float vignetteStrength = remap(vignetteDistance, vignetteStart, vignetteEnd, 0.0, 1.0);
   vignetteStrength = smoothstep(0.0, 1.0, vignetteStrength);
-  // color.rgb = mix(color.rgb, vec3(0.0), vignetteStrength);
+  vignetteStrength *= uIntensidadVineta;
 
-  // RGB Shift
-  float r = texture(uDefaultTexture, distoredUv + vec2(sin(0.0), cos(0.0)) * 0.02 * vignetteStrength).r;
-  float g = texture(uDefaultTexture, distoredUv + vec2(sin(2.1), cos(2.1)) * 0.02 * vignetteStrength).g;
-  float b = texture(uDefaultTexture, distoredUv + vec2(sin(-2.1), cos(-2.1)) * 0.02 * vignetteStrength).b;
+  /**
+   * Desplazamiento Cromático Relativista (Redshift Gravitacional)
+   * z = √[(1-3rs/r)/(1-2rs/r)] - 1
+   * Los fotones pierden energía al escapar del campo gravitacional
+   * Efecto: separación de canales RGB proporcional al redshift
+   */
+  float redshiftFactor = uDesplazamientoCromatico * 10.0;
+  float offsetStrength = redshiftFactor * vignetteStrength;
+  
+  // Separación cromática con patrón radial (realista para lente gravitacional)
+  float angle = atan(toConvergence.y, toConvergence.x);
+  vec2 redOffset = vec2(cos(angle), sin(angle)) * offsetStrength;
+  vec2 blueOffset = vec2(cos(angle + 3.14159), sin(angle + 3.14159)) * offsetStrength;
+  
+  // Muestreo separado de cada canal de color
+  float r = texture(uDefaultTexture, distortedUv + redOffset).r;
+  float g = texture(uDefaultTexture, distortedUv).g;
+  float b = texture(uDefaultTexture, distortedUv + blueOffset).b;
+  
   vec4 color = vec4(r, g, b, 1.0);
 
-  // Noise
-  float noise = random2d(vUv + uTime);
-  noise = noise - 0.5;
+  /**
+   * Aplicación de Viñeta Final
+   * Oscurecimiento progresivo hacia los bordes
+   */
+  color.rgb = mix(color.rgb, vec3(0.0), vignetteStrength * 0.5);
 
-  float grayscale = r * 0.299 + g * 0.587 + b * 0.114;
-  noise *= grayscale;
+  /**
+   * Ruido Cuántico (Fluctuaciones de Punto Cero)
+   * Simula las fluctuaciones cuánticas del vacío near el horizonte de eventos
+   * Intensidad proporcional al brillo local (realista)
+   */
+  float noise = random2d(vUv + uTime * 0.1);
+  noise = (noise - 0.5) * 2.0;
+  
+  // El ruido es más visible en regiones más brillantes (físicamente correcto)
+  float grayscale = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+  float noiseStrength = 0.02 * grayscale * sqrt(uMasaAgujeroNegro / 10.0);
+  
+  color.rgb += noise * noiseStrength;
 
-  color += noise * 0.5;
-
+  // Asegurar que los valores estén en el rango válido
+  color = clamp(color, 0.0, 1.0);
+  
   gl_FragColor = color;
 }

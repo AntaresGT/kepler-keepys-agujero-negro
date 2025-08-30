@@ -17,22 +17,6 @@ Una simulación en tiempo real de un agujero negro que implementa las ecuaciones
 - **Fondo Estrellado**: Utiliza la imagen de fondo para simular el campo estelar distorsionado
 - **Partículas Dinámicas**: Simulación de material cayendo al agujero negro
 
-## Controles en Tiempo Real
-
-Durante la simulación puedes modificar los parámetros físicos:
-
-| Tecla | Función |
-|-------|---------|
-| `Q` | Aumentar Radio de Schwarzschild |
-| `A` | Disminuir Radio de Schwarzschild |
-| `W` | Aumentar Spin del agujero negro (parámetro a) |
-| `S` | Disminuir Spin del agujero negro |
-| `E` | Aumentar fuerza de la lente gravitacional |
-| `D` | Disminuir fuerza de la lente gravitacional |
-| `R` | Aumentar temperatura del disco de acreción |
-| `F` | Disminuir temperatura del disco de acreción |
-| `ESC` | Salir de la simulación |
-
 ## Fundamentos Físicos
 
 ### Ecuaciones Implementadas
@@ -70,25 +54,6 @@ factor_kerr = 1 + (a²rs²)/(4r²)
 ```
 Donde 'a' es el parámetro de spin del agujero negro.
 
-## Instalación y Ejecución
-
-### Requisitos
-- Python 3.7+
-- Pygame 2.5.0+
-- NumPy 1.24.0+
-- Numba 0.57.0+
-- OpenCV-Python 4.7.0+
-
-### Instalación
-```bash
-pip install -r requirements.txt
-```
-
-### Ejecución
-```bash
-python principal.py
-```
-
 ## Detalles Técnicos
 
 ### Optimizaciones Implementadas
@@ -124,25 +89,3 @@ Esta simulación está basada en:
 - Chandrasekhar, S. (1983). "The Mathematical Theory of Black Holes"
 - Misner, Thorne & Wheeler (1973). "Gravitation"
 - James et al. (2015). "Gravitational lensing by spinning black holes in astrophysics, and in the movie Interstellar"
-
-## Estructura del Código
-
-```
-principal.py
-├── ConstantesAgujeroNegro     # Parámetros físicos
-├── SimuladorAgujeroNegro      # Clase principal
-│   ├── ecuacion_geodesica_agujero_negro()    # Física de deflexión
-│   ├── calcular_temperatura_disco()         # Termodinámica
-│   ├── aplicar_lente_gravitacional()        # Ray tracing
-│   ├── dibujar_disco_acrecion()             # Renderizado
-│   └── procesar_eventos()                   # Controles
-└── main()                     # Función principal
-```
-
-## Contribuciones
-
-Este proyecto está inspirado en el trabajo científico de Kip Thorne y está diseñado con fines educativos y de visualización científica. Las ecuaciones implementadas reflejan la física real de los agujeros negros según nuestro entendimiento actual.
-
-## Licencia
-
-Ver archivo LICENSE para detalles.
