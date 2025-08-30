@@ -296,6 +296,12 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
             radioSchwarzschildVisual * 2, 
             radioSchwarzschildVisual * 2
         );
+
+        distortion.hole.geometry = new THREE.CircleGeometry(
+            (radioSchwarzschildVisual * configuracion.tamanoLenteGravitacional) * 0.5,
+            128
+        );
+
         
         distortion.hole.material = new THREE.ShaderMaterial({
             vertexShader: distortionHoleVertex,
