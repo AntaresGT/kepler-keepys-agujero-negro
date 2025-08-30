@@ -259,6 +259,7 @@ export function ControlesAgujeroNegro({
                         <p>• Métrica de Kerr para agujeros negros rotativos</p>
                         <p>• Modelo de disco de acreción Shakura-Sunyaev</p>
                         <p>• Efectos de lente gravitacional relativista</p>
+                        <p>• <a className="hover:underline hover:border-blue-400" href="https://github.com/kavan010/black_hole/tree/main">Agujero negro GitHub C++</a></p>
                     </div>
                 </div>
             </div>
