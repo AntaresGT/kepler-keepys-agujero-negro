@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+/* eslint-enable @typescript-eslint/ban-ts-comment */
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -18,6 +20,35 @@ import distortionDiscFragment from "@/shaders/distortionDisc/fragment.glsl";
 
 interface AgujeroNegroProps {
     configuracion: ConfiguracionAgujeroNegro;
+}
+
+/**
+ * Convierte una temperatura en Kelvin a un color aproximado RGB
+ * Algoritmo basado en la aproximación de radiación de cuerpo negro de Tanner Helland
+ * https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html
+ */
+function colorSegunTemperatura(temperatura: number): string {
+    const temp = Math.max(temperatura / 100, 1); // Evitar logaritmos de números < 1
+    let rojo: number;
+    let verde: number;
+    let azul: number;
+
+    if (temp <= 66) {
+        rojo = 255;
+        verde = 99.4708025861 * Math.log(temp) - 161.1195681661;
+        azul = temp <= 19 ? 0 : 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
+    } else {
+        rojo = 329.698727446 * Math.pow(temp - 60, -0.1332047592);
+        verde = 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
+        azul = 255;
+    }
+
+    rojo = Math.min(Math.max(rojo, 0), 255);
+    verde = Math.min(Math.max(verde, 0), 255);
+    azul = Math.min(Math.max(azul, 0), 255);
+
+    const color = (Math.round(rojo) << 16) | (Math.round(verde) << 8) | Math.round(azul);
+    return `#${color.toString(16).padStart(6, "0")}`;
 }
 
 /**
@@ -193,68 +224,41 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
 
         /**
          * Generación de gradiente de temperatura del disco
-         * Basado en la distribución de cuerpo negro y el modelo Shakura-Sunyaev
-         * Colores desde blanco (alta T) hasta rojo/púrpura (baja T)
+         * El color se calcula según la temperatura resultante del modelo de Shakura-Sunyaev
+         * T(r) ∝ (M·Ṁ/r³)^(1/4). Se consideran masa y velocidad de acreción.
          */
         disc.gradient = {};
         disc.gradient.canvas = document.createElement("canvas");
         disc.gradient.canvas.width = 1;
         disc.gradient.canvas.height = 128;
         disc.gradient.context = disc.gradient.canvas.getContext("2d");
-        disc.gradient.style = disc.gradient.context.createLinearGradient(
-            0,
-            0,
-            0,
-            disc.gradient.canvas.height
-        );
-        
-        /**
-         * Mapeo de temperatura a colores usando la ley de Wien
-         * λmax = b/T donde b = 2.898×10^(-3) m·K (constante de Wien)
-         * Temperaturas: 15000K (blanco-azul) → 3000K (rojo)
-         */
-        const temperaturaBase = configuracion.temperaturaMaximaDisco;
-        if (temperaturaBase >= 12000) {
-            // Disco muy caliente - colores azul-blancos dominantes
-            disc.gradient.style.addColorStop(0, "#ffffff");  // 15000K+ (blanco)
-            disc.gradient.style.addColorStop(0.1, "#e6f3ff"); // 12000K (azul-blanco)
-            disc.gradient.style.addColorStop(0.3, "#ffbc68");  // 8000K (amarillo)
-            disc.gradient.style.addColorStop(0.5, "#ff5600");  // 5000K (naranja)
-            disc.gradient.style.addColorStop(0.8, "#cc00ff");  // 3000K (púrpura)
-        } else if (temperaturaBase >= 8000) {
-            // Disco caliente - espectro estándar
-            disc.gradient.style.addColorStop(0, "#fffbf9");   // Blanco cálido
-            disc.gradient.style.addColorStop(0.1, "#ffbc68");  // Amarillo
-            disc.gradient.style.addColorStop(0.2, "#ff5600");  // Naranja
-            disc.gradient.style.addColorStop(0.4, "#ff0053");  // Rojo
-            disc.gradient.style.addColorStop(0.8, "#cc00ff");  // Púrpura
-        } else {
-            // Disco frío - dominado por rojos
-            disc.gradient.style.addColorStop(0, "#ff8888");   // Rojo claro
-            disc.gradient.style.addColorStop(0.2, "#ff3333");  // Rojo
-            disc.gradient.style.addColorStop(0.4, "#cc0000");  // Rojo oscuro
-            disc.gradient.style.addColorStop(0.7, "#880000");  // Rojo muy oscuro
-            disc.gradient.style.addColorStop(0.9, "#440000");  // Marrón rojizo
-        }
-        
+        disc.gradient.style = disc.gradient.context.createLinearGradient(0, 0, 0, disc.gradient.canvas.height);
+
+        // Temperatura base ajustada por masa y tasa de acreción
+        const factorMasa = Math.pow(configuracion.masaAgujeroNegro / 10, 0.25);
+        const factorAcrecion = Math.pow(configuracion.velocidadAcrecion, 0.25);
+        const temperaturaBase = configuracion.temperaturaMaximaDisco * factorMasa * factorAcrecion;
+
+        // Cinco paradas de color desde el centro caliente hasta el borde frío
+        const pasos = [1.0, 0.7, 0.5, 0.3, 0.1];
+        pasos.forEach((p, i) => {
+            const temp = temperaturaBase * p;
+            disc.gradient.style.addColorStop(i / (pasos.length - 1), colorSegunTemperatura(temp));
+        });
+
         disc.gradient.context.fillStyle = disc.gradient.style;
-        disc.gradient.context.fillRect(
-            0,
-            0,
-            disc.gradient.canvas.width,
-            disc.gradient.canvas.height
-        );
+        disc.gradient.context.fillRect(0, 0, disc.gradient.canvas.width, disc.gradient.canvas.height);
         disc.gradient.texture = new THREE.CanvasTexture(disc.gradient.canvas);
 
         /**
-         * Geometría del disco con radio interno y externo
-         * Radio interno ≈ 3rs (ISCO - Innermost Stable Circular Orbit)
-         * Radio externo limitado por efectos de marea y pérdida de masa
+         * Geometría del disco con radios derivados del radio de Schwarzschild
+         * rs = 2GM/c². Usamos ISCO ≈ 3rs y un radio externo de 12rs.
          */
-        const radioInternoFactor = 1.5 * (configuracion.masaAgujeroNegro / 10); // Escala con masa
-        const radioExterno = 6 * (configuracion.masaAgujeroNegro / 10);
-        
-        disc.geometry = new THREE.CylinderGeometry(radioInternoFactor, radioExterno, 0, 64, 8, true);
+        const radioSchwarzschildVisual = configuracion.masaAgujeroNegro * 0.05;
+        const radioInterno = radioSchwarzschildVisual * 3.0;   // Órbita estable más interna
+        const radioExterno = radioSchwarzschildVisual * 12.0;  // Límite exterior del disco
+
+        disc.geometry = new THREE.CylinderGeometry(radioInterno, radioExterno, 0, 64, 8, true);
         disc.material = new THREE.ShaderMaterial({
             transparent: true,
             side: THREE.DoubleSide,
@@ -265,7 +269,8 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
                 uGradientTexture: { value: disc.gradient.texture },
                 uNoisesTexture: { value: noises.renderTarget.texture },
                 // Parámetros físicos del disco
-                uTemperaturaMaxima: { value: configuracion.temperaturaMaximaDisco },
+                // Temperatura máxima efectiva considerando masa y acreción
+                uTemperaturaMaxima: { value: temperaturaBase },
                 uVelocidadRotacion: { value: configuracion.velocidadRotacionDisco },
                 uVelocidadAcrecion: { value: configuracion.velocidadAcrecion },
                 uIntensidadRuido: { value: configuracion.intensidadRuido }
@@ -290,10 +295,9 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
          */
         distortion.hole = {};
         
-        // Tamaño del agujero negro escalado por su masa
-        const radioSchwarzschildVisual = configuracion.masaAgujeroNegro * 0.04;
+        // Tamaño del agujero negro escalado por su masa (rs visual)
         distortion.hole.geometry = new THREE.PlaneGeometry(
-            radioSchwarzschildVisual * 2, 
+            radioSchwarzschildVisual * 2,
             radioSchwarzschildVisual * 2
         );
         
@@ -302,7 +306,6 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
             fragmentShader: distortionHoleFragment,
             uniforms: {
                 // Parámetros del agujero negro según Kip Thorne
-                uMasaAgujeroNegro: { value: configuracion.masaAgujeroNegro },
                 uIntensidadDistorsion: { value: configuracion.intensidadDistorsion },
                 uRadioSchwarzschild: { value: radioSchwarzschildVisual }
             }
@@ -319,7 +322,7 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
          * Los efectos de lente son más pronunciados cerca del horizonte de eventos
          */
         distortion.disc = {};
-        const radioDiscoDistorsion = radioSchwarzschildVisual * 6;
+        const radioDiscoDistorsion = radioExterno * 2; // El plano debe cubrir todo el disco
         distortion.disc.geometry = new THREE.PlaneGeometry(radioDiscoDistorsion, radioDiscoDistorsion);
         distortion.disc.material = new THREE.ShaderMaterial({
             transparent: true,
@@ -329,8 +332,8 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
             uniforms: {
                 // Parámetros de distorsión del disco
                 uIntensidadDistorsion: { value: configuracion.intensidadDistorsion },
-                uMasaAgujeroNegro: { value: configuracion.masaAgujeroNegro },
-                uDesplazamientoCromatico: { value: configuracion.desplazamientoCromatico }
+                uRadioSchwarzschild: { value: radioSchwarzschildVisual },
+                uRadioDisco: { value: radioExterno }
             }
         });
         distortion.disc.mesh = new THREE.Mesh(
@@ -513,14 +516,20 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
              * Actualización de Parámetros de Distorsión en Tiempo Real
              * Los efectos de lente gravitacional cambian con la configuración
              */
-            if (distortion.hole.material.uniforms.uMasaAgujeroNegro) {
-                distortion.hole.material.uniforms.uMasaAgujeroNegro.value = configuracion.masaAgujeroNegro;
-            }
             if (distortion.hole.material.uniforms.uIntensidadDistorsion) {
                 distortion.hole.material.uniforms.uIntensidadDistorsion.value = configuracion.intensidadDistorsion;
             }
             if (distortion.disc.material.uniforms.uIntensidadDistorsion) {
                 distortion.disc.material.uniforms.uIntensidadDistorsion.value = configuracion.intensidadDistorsion;
+            }
+            if (distortion.disc.material.uniforms.uRadioDisco) {
+                distortion.disc.material.uniforms.uRadioDisco.value = radioExterno;
+            }
+            if (distortion.disc.material.uniforms.uRadioSchwarzschild) {
+                distortion.disc.material.uniforms.uRadioSchwarzschild.value = radioSchwarzschildVisual;
+            }
+            if (distortion.hole.material.uniforms.uRadioSchwarzschild) {
+                distortion.hole.material.uniforms.uRadioSchwarzschild.value = radioSchwarzschildVisual;
             }
 
             /**

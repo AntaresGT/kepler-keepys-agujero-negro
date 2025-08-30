@@ -10,7 +10,6 @@
  */
 
 // Parámetros físicos del agujero negro
-uniform float uMasaAgujeroNegro;     // Masa M en unidades solares
 uniform float uIntensidadDistorsion; // Factor de intensificación α
 uniform float uRadioSchwarzschild;   // Radio visual rs
 
@@ -33,40 +32,26 @@ void main() {
    * La intensidad de distorsión es proporcional a GM/r²
    * Cerca del horizonte de eventos, la distorsión tiende a infinito
    */
-  float distanceToCenter = length(vUv - 0.5);
-  
-  // Factor de escala basado en la masa del agujero negro
-  float massFactor = sqrt(uMasaAgujeroNegro / 10.0);
-  
-  /**
-   * Aplicación de la Fórmula de Lente Gravitacional
-   * α = 4GM/(c²r) - ángulo de deflexión
-   * Aproximación: intensidad ∝ 1/r² cerca del horizonte
-   */
-  float radioInternoEfectivo = 0.1 * massFactor;  // Zona de máxima distorsión
-  float radioExternoEfectivo = 0.5 / massFactor;  // Límite de influencia gravitacional
-  
-  // Distribución de distorsión con caída r^(-2) (físicamente correcta)
-  float strength = remap(distanceToCenter, radioInternoEfectivo, radioExternoEfectivo, 1.0, 0.0);
-  
-  // Aplicar perfil de distorsión suavizado (evita discontinuidades numéricas)
+  float distanciaNormalizada = length(vUv - 0.5);
+
+  // Conversión a unidades físicas usando el tamaño del plano (diámetro = 2rs)
+  float r = distanciaNormalizada * uRadioSchwarzschild * 2.0;
+
+  // Radio interno: horizonte de eventos (rs)
+  float radioInternoEfectivo = uRadioSchwarzschild;
+  // Radio externo: región donde la lente gravitacional sigue siendo apreciable (~5rs)
+  float radioExternoEfectivo = uRadioSchwarzschild * 5.0;
+
+  // Distribución de distorsión con caída r^(-2) según Relatividad General
+  float strength = remap(r, radioInternoEfectivo, radioExternoEfectivo, 1.0, 0.0);
   strength = smoothstep(0.0, 1.0, strength);
-  
-  // Intensificar según el parámetro de configuración
+
+  // Intensificar según configuración
   strength *= uIntensidadDistorsion;
-  
-  /**
-   * Efecto de Horizonte de Eventos
-   * En el centro exacto, la distorsión es máxima (singularidad visual)
-   * Se suaviza para evitar artifacts numéricos
-   */
-  if (distanceToCenter < radioInternoEfectivo * 0.5) {
-    strength = uIntensidadDistorsion; // Distorsión máxima en el centro
-  }
-  
-  // Asegurar que la intensidad esté en el rango válido
+
+  // Límite de intensidad
   strength = clamp(strength, 0.0, 2.0);
-  
-  // Output: intensidad de distorsión en el canal rojo
+
+  // Salida en el canal rojo
   gl_FragColor = vec4(vec3(strength), 1.0);
 }

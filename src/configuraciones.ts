@@ -198,6 +198,12 @@ export const configuracionDefecto: ConfiguracionAgujeroNegro = {
 };
 
 /**
+ * Agregar la configuración por defecto al inicio del arreglo principal
+ * Esto facilita restablecer los valores originales desde la interfaz
+ */
+configuracionesPredefinidas.unshift(configuracionDefecto);
+
+/**
  * Rangos válidos para validación de parámetros
  */
 export const rangosParametros = {

@@ -1,4 +1,4 @@
-import { type ConfiguracionAgujeroNegro, rangosParametros } from './configuraciones';
+import { type ConfiguracionAgujeroNegro, rangosParametros, configuracionDefecto } from './configuraciones';
 
 interface ControlesAgujeroNegroProps {
     configuracion: ConfiguracionAgujeroNegro;
@@ -110,6 +110,12 @@ export function ControlesAgujeroNegro({
                         ))}
                     </select>
                     <p className="text-xs text-gray-400 mt-1">{configuracion.descripcion}</p>
+                    <button
+                        className="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white text-sm py-1 rounded"
+                        onClick={() => onSeleccionarConfiguracionPredefinida(configuracionDefecto)}
+                    >
+                        Restablecer valores por defecto
+                    </button>
                 </div>
 
                 {/* Controles Principales */}
