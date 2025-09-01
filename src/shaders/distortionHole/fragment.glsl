@@ -10,7 +10,7 @@
  */
 
 // Parámetros físicos del agujero negro
-uniform float uMasaAgujeroNegro;     // Masa M en unidades solares
+/*uniform float uMasaAgujeroNegro;     // Masa M en unidades solares
 uniform float uIntensidadDistorsion; // Factor de intensificación α
 uniform float uRadioSchwarzschild;   // Radio visual rs
 
@@ -33,6 +33,7 @@ void main() {
    * La intensidad de distorsión es proporcional a GM/r²
    * Cerca del horizonte de eventos, la distorsión tiende a infinito
    */
+  /*
   float distanceToCenter = length(vUv - 0.5);
   
   // Factor de escala basado en la masa del agujero negro
@@ -43,6 +44,7 @@ void main() {
    * α = 4GM/(c²r) - ángulo de deflexión
    * Aproximación: intensidad ∝ 1/r² cerca del horizonte
    */
+  /*
   float radioInternoEfectivo = 0.1 * massFactor;  // Zona de máxima distorsión
   float radioExternoEfectivo = 0.5 / massFactor;  // Límite de influencia gravitacional
   
@@ -60,6 +62,7 @@ void main() {
    * En el centro exacto, la distorsión es máxima (singularidad visual)
    * Se suaviza para evitar artifacts numéricos
    */
+  /*
   if (distanceToCenter < radioInternoEfectivo * 0.5) {
     strength = uIntensidadDistorsion; // Distorsión máxima en el centro
   }
@@ -68,5 +71,26 @@ void main() {
   strength = clamp(strength, 0.0, 2.0);
   
   // Output: intensidad de distorsión en el canal rojo
+  gl_FragColor = vec4(vec3(strength), 1.0);
+}
+*/
+
+varying vec2 vUv;
+
+float inverseLerp(float v, float minValue, float maxValue) {
+  return (v - minValue) / (maxValue - minValue);
+}
+
+
+float remap(float v, float inMin, float inMax, float outMin, float outMax) {
+  float t = inverseLerp(v, inMin, inMax);
+  return mix(outMin, outMax, t);
+}
+
+
+void main() {
+  float distanceToCenter = length(vUv - 0.5);
+  float strength = remap(distanceToCenter, 0.2, 0.5, 1.0, 0.0);
+  strength = smoothstep(0.0, 1.0, strength);
   gl_FragColor = vec4(vec3(strength), 1.0);
 }

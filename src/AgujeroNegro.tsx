@@ -293,14 +293,14 @@ function AgujeroNegro({ configuracion }: AgujeroNegroProps) {
         // Tamaño del agujero negro escalado por su masa
         const radioSchwarzschildVisual = configuracion.masaAgujeroNegro * 0.04;
         distortion.hole.geometry = new THREE.PlaneGeometry(
-            radioSchwarzschildVisual * 2, 
-            radioSchwarzschildVisual * 2
+            radioSchwarzschildVisual * 2 * configuracion.tamanoLenteGravitacional, 
+            radioSchwarzschildVisual * 2 * configuracion.tamanoLenteGravitacional
         );
 
-        distortion.hole.geometry = new THREE.CircleGeometry(
+        /*distortion.hole.geometry = new THREE.CircleGeometry(
             (radioSchwarzschildVisual * configuracion.tamanoLenteGravitacional) * 0.5,
             128
-        );
+        );*/
 
         
         distortion.hole.material = new THREE.ShaderMaterial({

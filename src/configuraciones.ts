@@ -16,12 +16,33 @@ export interface ConfiguracionAgujeroNegro {
     intensidadVineta: number;
     desplazamientoCromatico: number;
     intensidadRuido: number;
+    tamanoLenteGravitacional: number;
 }
+
+/**
+ * Valores por defecto para nuevas configuraciones
+ */
+export const configuracionDefecto: ConfiguracionAgujeroNegro = {
+    nombre: "Por Defecto",
+    descripcion: "Configuración estándar balanceada",
+    masaAgujeroNegro: 10,
+    velocidadRotacionDisco: 1.0,
+    temperaturaMaximaDisco: 10000,
+    intensidadDistorsion: 1.0,
+    cantidadEstrellas: 10000,
+    amplitudVibraciones: 0.1,
+    velocidadAcrecion: 0.1,
+    intensidadVineta: 1.0,
+    desplazamientoCromatico: 0.02,
+    intensidadRuido: 0.1,
+    tamanoLenteGravitacional: 4
+};
 
 /**
  * Configuraciones predefinidas basadas en objetos reales y casos educativos
  */
 export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
+    {...configuracionDefecto},
     {
         nombre: "Sagittarius A*",
         descripcion: "Agujero negro supermasivo en el centro de la Vía Láctea (4.1 × 10⁶ M☉, escala reducida)",
@@ -34,7 +55,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.15,
         intensidadVineta: 1.1,
         desplazamientoCromatico: 0.025,
-        intensidadRuido: 0.08
+        intensidadRuido: 0.08,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "M87* (Event Horizon Telescope)",
@@ -48,7 +70,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.25,
         intensidadVineta: 1.3,
         desplazamientoCromatico: 0.035,
-        intensidadRuido: 0.06
+        intensidadRuido: 0.06,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Agujero Negro Estelar",
@@ -62,7 +85,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.3,
         intensidadVineta: 0.9,
         desplazamientoCromatico: 0.02,
-        intensidadRuido: 0.12
+        intensidadRuido: 0.12,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Agujero Negro Intermedio",
@@ -76,7 +100,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.2,
         intensidadVineta: 1.0,
         desplazamientoCromatico: 0.022,
-        intensidadRuido: 0.1
+        intensidadRuido: 0.1,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Configuración Educativa",
@@ -90,7 +115,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.25,
         intensidadVineta: 1.1,
         desplazamientoCromatico: 0.025,
-        intensidadRuido: 0.1
+        intensidadRuido: 0.1,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Modo Divulgación",
@@ -104,7 +130,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.4,
         intensidadVineta: 1.5,
         desplazamientoCromatico: 0.04,
-        intensidadRuido: 0.15
+        intensidadRuido: 0.15,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Modo Científico Puro",
@@ -118,7 +145,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.15,
         intensidadVineta: 0.8,
         desplazamientoCromatico: 0.015,
-        intensidadRuido: 0.05
+        intensidadRuido: 0.05,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Agujero Negro Extremo",
@@ -132,7 +160,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.6,
         intensidadVineta: 2.0,
         desplazamientoCromatico: 0.06,
-        intensidadRuido: 0.2
+        intensidadRuido: 0.2,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Agujero Negro Mínimo",
@@ -146,7 +175,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.1,
         intensidadVineta: 0.7,
         desplazamientoCromatico: 0.01,
-        intensidadRuido: 0.15
+        intensidadRuido: 0.15,
+        tamanoLenteGravitacional: 4
     },
     {
         nombre: "Evento de Fusión",
@@ -160,7 +190,8 @@ export const configuracionesPredefinidas: ConfiguracionAgujeroNegro[] = [
         velocidadAcrecion: 0.8,
         intensidadVineta: 1.4,
         desplazamientoCromatico: 0.05,
-        intensidadRuido: 0.3
+        intensidadRuido: 0.3,
+        tamanoLenteGravitacional: 4
     }
 ];
 
@@ -179,23 +210,6 @@ export function obtenerConfiguracionAleatoria(): ConfiguracionAgujeroNegro {
     return configuracionesPredefinidas[indiceAleatorio];
 }
 
-/**
- * Valores por defecto para nuevas configuraciones
- */
-export const configuracionDefecto: ConfiguracionAgujeroNegro = {
-    nombre: "Por Defecto",
-    descripcion: "Configuración estándar balanceada",
-    masaAgujeroNegro: 10,
-    velocidadRotacionDisco: 1.0,
-    temperaturaMaximaDisco: 10000,
-    intensidadDistorsion: 1.0,
-    cantidadEstrellas: 10000,
-    amplitudVibraciones: 0.1,
-    velocidadAcrecion: 0.1,
-    intensidadVineta: 1.0,
-    desplazamientoCromatico: 0.02,
-    intensidadRuido: 0.1
-};
 
 /**
  * Rangos válidos para validación de parámetros
